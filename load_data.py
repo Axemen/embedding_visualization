@@ -4,8 +4,7 @@ import numpy as np
 from dotenv import load_dotenv
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from sklearn.decomposition import PCA
-
+import pandas as pd
 load_dotenv()
 
 client = MongoClient(os.getenv("MONGO_URI"), server_api=ServerApi("1"))
@@ -16,24 +15,21 @@ collection_name = "embedded_movies"
 collection = client[db_name][collection_name]
 
 pipeline = [
-    {"$match": {"plot_embedding": {"$exists": 1}, "title": {"$exists": 1}}},
-    {"$sample": {"size": 100}},
-    {"$project": {"plot_embedding": 1, "title": 1}},
+    {"$match": {"plot_embedding": {"$exists": 1}, "title": {"$exists": 1}, "genres": {"$exists": 1}}},
+    {"$sample": {"size": 300}},
+    {"$project": {"plot_embedding": 1, "title": 1, "genres": 1}},
 ]
 
 
 embeddings = []
 titles = []
+genres = []
 for doc in collection.aggregate(pipeline):
     embeddings.append(doc["plot_embedding"])
     titles.append(doc["title"])
+    genres.append(doc["genres"])
 
 embeddings = np.array(embeddings)
-titles = np.array(titles)
+np.save('embeddings.npy', embeddings)
+pd.DataFrame({"titles": titles, "genres": genres}).to_csv("metadata.csv")
 
-pca = PCA(n_components=3).fit(embeddings)
-
-output = pca.transform(embeddings)
-
-np.save("pcad_embeddings.npy", output)
-np.save("titles.npy", titles)
