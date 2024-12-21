@@ -30,6 +30,6 @@ for doc in collection.aggregate(pipeline):
     genres.append(doc["genres"])
 
 embeddings = np.array(embeddings)
-np.save('data/embeddings.npy', embeddings)
+np.save('data/embeddings.npy', embeddings, allow_pickle=True)
 pd.DataFrame({"titles": titles, "genres": genres}).to_csv("data/metadata.csv", index=False)
 
